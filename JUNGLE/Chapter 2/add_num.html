@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script>
+    function add(n) {
+        let sum = 0;
+        for(let i=1; i<=n; i++){
+            sum += i;
+        }
+        return sum;
+    }
+
+    let n = prompt("몇 까지의 숫자를 더할까요?");
+    let result = add(n);
+    alert(n + " 까지의 숫자의 합은 " + result);
+    </script>
+</head>
+<body>
+</body>
+</html>
