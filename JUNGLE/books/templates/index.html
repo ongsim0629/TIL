@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>마이 페이보릿 북 | 프론트-백엔드 연결 마지막 예제!</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css" />
+    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+    <style>
+        .center {
+            text-align: center;
+        }
+
+        .book-list {
+            width: 500px;
+            margin: 20px auto 0 auto;
+        }
+
+        .star-name {
+            display: inline-block;
+        }
+
+        .star-name:hover {
+            text-decoration: underline;
+        }
+
+        .card {
+            margin-bottom: 15px;
+        }
+    </style>
+    <script>
+        $(document).ready(function () {
+            // index.html 로드가 완료되면 자동으로 showBooks() 함수를 호출합니다.
+            showBooks();
+        });
+
+        function showBooks() {
+            $.ajax({
+                type: 'GET',
+                url: '/api/books/list',
+                data: {},
+                success: function (response) {
+                    if (response['result'] == 'success') {
+                        $("#book-box").empty()
+                        let book_list = response['all_books']
+                        for (i = 0; i < book_list.length; i++) {
+                            let book = book_list[i];
+                            let title = book['title'];
+                            let auth = book['auth'];
+                            let href = book['href'];
+                            let img_url = book['img_url'];
+                            let like = book['like'];
+
+                            let tmp_html =
+                                `<div class="card">
+                                <div class="card-content">
+                                    <div class="media">
+                                        <div class="media-left">
+                                            <figure class="image is-48x48">
+                                                <img src="${img_url}" alt="Placeholder image"/>
+                                            </figure>
+                                        </div>
+                                        <div class="media-content">
+                                            <a href="#" target="_blank" class="star-name title is-4">${auth} (좋아요: ${like})</a>
+                                            <p class="subtitle is-6">${title}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <footer class="card-footer">
+                                    <a href="#" onclick="likeBooks('${title}')" class="card-footer-item has-text-info">
+                                        위로!
+                                        <span class="icon">
+                                            <i class="fas fa-thumbs-up"></i>
+                                        </span>
+                                    </a>
+                                    <a href="#" onclick="deleteBooks('${title}')" class="card-footer-item has-text-danger">
+                                        삭제
+                                        <span class="icon">
+                                            <i class="fas fa-ban"></i>
+                                        </span>
+                                    </a>
+                                </footer>
+                            </div>`
+                            $("#book-box").append(tmp_html)
+                        }
+                    }
+                }
+            });
+
+        }
+
+        function likeBooks(title) {
+            $.ajax({
+                type: 'POST',
+                url: '/api/books/like',
+                data: {'title_give': title},
+                success: function (response) {
+                    if (response['result'] == 'success') {
+                        let msg = response['msg'];
+                        alert(msg);
+                        showBooks();
+                    }
+                }
+            });
+        }
+
+        function deleteBooks(title) {
+            $.ajax({
+                type: 'POST',
+                url: '/api/books/delete',
+                data: {'title_give': title},
+                success: function (response) {
+                    if (response['result'] == 'success') {
+                        let msg = response['msg'];
+                        alert(msg);
+                        showBooks();
+                    }
+                }
+            });
+        }
+
+    </script>
+</head>
+
+<body>
+    <section class="hero is-warning">
+        <div class="hero-body">
+            <div class="container center">
+                <h1 class="title">
+                    마이 페이보릿 북😆
+                </h1>
+                <h2 class="subtitle">
+                    순위를 매겨봅시다
+                </h2>
+            </div>
+        </div>
+    </section>
+    <div class="book-list" id="book-box">
+        <div class="card">
+            <div class="card-content">
+                <div class="media">
+                    <div class="media-left">
+                        <figure class="image is-48x48">
+                            <img src="https://image.yes24.com/goods/122120495/L" alt="Placeholder image" />
+                        </figure>
+                    </div>
+                    <div class="media-content">
+                        <a href="#" target="_blank" class="star-name title is-4">강용수 (좋아요: 3)</a>
+                        <p class="subtitle is-6">마흔에 읽는 쇼펜하우어</p>
+                    </div>
+                </div>
+            </div>
+            <footer class="card-footer">
+                <a href="#" onclick="likeBooks('강용수')" class="card-footer-item has-text-info">
+                    위로!
+                    <span class="icon">
+                        <i class="fas fa-thumbs-up"></i>
+                    </span>
+                </a>
+                <a href="#" onclick="deleteBooks('강용수')" class="card-footer-item has-text-danger">
+                    삭제
+                    <span class="icon">
+                        <i class="fas fa-ban"></i>
+                    </span>
+                </a>
+            </footer>
+        </div>
+    </div>
+</body>
+
+</html>
