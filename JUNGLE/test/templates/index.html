@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>간단한 할 일 목록</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+                font-family: "IBM Plex Sans KR", sans-serif;
+            }
+        .btn-warning {
+            color: white;
+        }
+    </style>
+    <script>
+        // index.html 로드가 완료되면 showTodos() 수행
+        $(document).ready(function () {
+            showTodos();
+        });
+
+        // todo 띄우는 함수
+        function showTodos() {
+            $.ajax({
+                type: 'GET',
+                url: '/api/todos/list',
+                data: {},
+                success: function (response) {
+                    if (response['result'] == 'success') {
+                        $("#todo-list").empty()
+                        $("#todo-val").val('')
+                        let todo_list = response['todos']
+                        for (i = 0; i < todo_list.length; i++) {
+                            let one_todo = todo_list[i];
+                            let todo = one_todo['todo'];
+                            let complete= one_todo['complete'];
+
+                            // 완료된 할 일인 경우 -> 완료 상태 html 이용
+                            if (complete == 1){
+                                let tmp_html =
+                                `<li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <del>${todo}</del>
+                                    <span>
+                                        <button class="btn btn-info btn-sm mr-1" onclick="incompleteTodo('${todo}')">완료 취소</button>
+                                        <button class="btn btn-danger btn-sm" onclick="deleteTodo('${todo}')">삭제</button>
+                                    </span>
+                                </li>`
+                                $("#todo-list").append(tmp_html)
+                            }
+                            // 완료되지 않은 할 일인 경우 -> 기본 상태 html 이용 + 해당하는 수정하기 html도 미리 만들어두되 안 보이게
+                            else{
+                                let tmp_html =
+                                `<li class="list-group-item d-flex justify-content-between align-items-center">
+                                    ${todo}
+                                    <span>
+                                        <button class="btn btn-success btn-sm mr-1" onclick="completeTodo('${todo}')">완료</button>
+                                        <button class="btn btn-secondary btn-sm mr-1" onclick="editTodo(this)">수정</button>
+                                        <button class="btn btn-danger btn-sm" onclick="deleteTodo('${todo}')">삭제</button>
+                                    </span>
+                                </li>
+                                <li style="display:none !important" class="list-group-item d-flex justify-content-between align-items-center">
+                                    <form class="form-inline w-75">
+                                        <input type="text" class="form-control mr-2 w-75" value="${todo}">
+                                        <button type="submit" class="btn btn-secondary btn-sm mr-1" onclick="updateTodo('${todo}', this, event)">업데이트</button>
+                                        <button class="btn btn-warning btn-sm" onclick="uneditTodo(event, this)">취소</button>
+                                        </form>
+                                        </li>
+                                `
+                                $("#todo-list").append(tmp_html)
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // todo 추가 함수
+        function makeTodo(todo) {
+            let input = ($('#todo-val').val())
+            // input 값 비어있을 때
+            if (input == ''){
+                alert('할 일을 입력해주세요!')
+            }
+            else {
+                $.ajax({
+                type: 'POST',
+                url: '/api/todos',
+                data: {'todo_give': input},
+                success: function (response) {
+                    if (response['result'] == 'success') {
+                        let msg = response['msg'];
+                        alert(msg);
+                        showTodos();
+                    }
+                }
+            });
+            }
+        }
+
+        // todo 삭제 함수
+        function deleteTodo(todo) {
+            $.ajax({
+                type: 'POST',
+                url: '/api/todos/delete',
+                data: {'todo_give': todo},
+                success: function (response) {
+                    if (response['result'] == 'success') {
+                        let msg = response['msg'];
+                        alert(msg);
+                        showTodos();
+                    }
+                }
+            });
+        }
+
+        // todo 완료 함수
+        function completeTodo(todo) {
+            $.ajax({
+                type: 'POST',
+                url: '/api/todos/complete',
+                data: {'todo_give': todo},
+                success: function (response) {
+                    if (response['result'] == 'success') {
+                        let msg = response['msg'];
+                        alert(msg);
+                        showTodos();
+                    }
+                }
+            });
+        }
+
+        // todo 완료 취소 함수
+        function incompleteTodo(todo) {
+            $.ajax({
+                type: 'POST',
+                url: '/api/todos/incomplete',
+                data: {'todo_give': todo},
+                success: function (response) {
+                    if (response['result'] == 'success') {
+                        let msg = response['msg'];
+                        alert(msg);
+                        showTodos();
+                    }
+                }
+            });
+        }
+
+        // todo 수정하기 버튼 클릭시 html 변경 함수 -> api 필요 x
+        function editTodo(element) {
+            let index = $(element).parent().parent().index()
+            $("#todo-list").find('li').eq(index).attr('style','display : none!important;');
+            $("#todo-list").find('li').eq(index+1).attr('style','display : block;');
+        }
+
+        // todo 수정하기 취소 버튼 클릭시 html 변경 함수 -> api 필요 x
+        function uneditTodo(event, element) {
+            event.preventDefault();
+            let index = $(element).parent().parent().index();
+            $("#todo-list").find('li').eq(index).attr('style','display : none!important;');
+            $("#todo-list").find('li').eq(index-1).attr('style','display : block;');
+        }
+
+        // todo 완료 함수
+        function updateTodo(todo, element, event) {
+            event.preventDefault();
+            let inputElement = $(element).closest('form').find('input');
+            let new_input = inputElement.val();
+            // input안의 값이 이전의 todo 값과 같으면
+            if(new_input == todo){
+                alert('할 일을 수정해주세요!');
+            }
+            else{
+                $.ajax({
+                type: 'POST',
+                url: '/api/todos/update',
+                data: {'todo_give': todo, 'new_todo': new_input},
+                success: function (response) {
+                    if (response['result'] == 'success') {
+                        let msg = response['msg'];
+                        alert(msg);
+                        showTodos();
+                    }
+                }
+            });
+            }
+        }
+
+    </script>
+</head>
+
+<body>
+    <div class="container mt-5">
+        <h2 class="text-center mb-4">할 일 목록</h2>
+        <!-- 할 일 추가 폼 -->
+        <form class="form-inline mb-4">
+            <input id="todo-val" type="text" class="form-control mr-2 w-50" placeholder="새 할 일">
+            <button type="button" class="btn btn-primary" onclick="makeTodo()">할 일 추가</button>
+        </form>
+
+        <!-- 할 일 목록 -->
+        <ul id="todo-list" class="list-group">
+            <!-- 예시 할 일 (기본 상태) -->
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                할 일 1
+                <span>
+                    <button class="btn btn-success btn-sm mr-1" onclick="completeTodo()">완료</button>
+                    <button class="btn btn-secondary btn-sm mr-1" onclick="editTodo()">수정</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteTodo()">삭제</button>
+                </span>
+            </li>
+
+            <!-- 예시 할 일 (완료 상태) -->
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <del>할 일 2 (완료)</del>
+                <span>
+                    <button class="btn btn-info btn-sm mr-1">완료 취소</button>
+                    <button class="btn btn-danger btn-sm">삭제</button>
+                </span>
+            </li>
+
+            <!-- 예시 할 일 (수정 상태) -->
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <form class="form-inline w-75">
+                    <input type="text" class="form-control mr-2 w-75" value="할 일 3 (수정)">
+                    <button type="submit" class="btn btn-secondary btn-sm mr-1">업데이트</button>
+                    <button class="btn btn-warning btn-sm">취소</button>
+                </form>
+            </li>
+            <!-- 추가 할 일이 여기에 추가됩니다 -->
+        </ul>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.js"
+    integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
+</html>
